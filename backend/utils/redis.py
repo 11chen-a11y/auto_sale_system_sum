@@ -1,5 +1,7 @@
 # 验证码存取工具函数
 
+from typing import Optional
+
 from config.conf_redis import redis_client, CODE_TTL
 
 
@@ -9,7 +11,7 @@ async def save_code(phone: str, code: str):
 
 
 # 取验证码
-async def get_code(phone: str) -> str | None:
+async def get_code(phone: str) -> Optional[str]:
     return await redis_client.get(f"sms:{phone}")
 
 

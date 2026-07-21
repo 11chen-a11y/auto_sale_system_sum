@@ -2,7 +2,7 @@
 # 8 张表，时段数据用 JSON 存储（96 个 15 分钟间隔）
 
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from sqlalchemy import BigInteger, String, Date, DateTime, DECIMAL, JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from config.conf_db import Base
@@ -22,7 +22,7 @@ class SysUser(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
 
-    customers: Mapped[list["Customer"]] = relationship(back_populates="user")
+    customers: Mapped[List["Customer"]] = relationship(back_populates="user")
 
 
 # 客户档案
@@ -42,7 +42,7 @@ class Customer(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     user: Mapped[Optional["SysUser"]] = relationship(back_populates="customers")
-    bills: Mapped[list["Bill"]] = relationship(back_populates="customer")
+    bills: Mapped[List["Bill"]] = relationship(back_populates="customer")
 
 
 # 节点电价

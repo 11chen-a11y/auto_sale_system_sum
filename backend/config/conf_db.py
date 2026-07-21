@@ -3,7 +3,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 
 engine = create_async_engine(
-    'mysql+aiomysql://root:150030@127.0.0.1:3306/auto_sale_system',
+    'mysql+aiomysql://root:123456@127.0.0.1:3306/auto_sale_system',
     echo=True,
     future=True,
     pool_pre_ping=True,
