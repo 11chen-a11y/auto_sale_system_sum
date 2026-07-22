@@ -1,7 +1,8 @@
 # Pydantic 数据模型
 # 定义 API 请求和响应的数据结构
 
-from pydantic import BaseModel, Field
+from typing import Optional
+from pydantic import BaseModel
 
 
 # 用户注册请求体（含手机号和验证码）
@@ -33,7 +34,7 @@ class UserLogin(BaseModel):
 class UserOut(BaseModel):
     user_id: int
     username: str
-    real_name: str | None = None
+    real_name: Optional[str] = None
     role: str
 
     model_config = {"from_attributes": True}
@@ -48,3 +49,8 @@ class Token(BaseModel):
 # 登录响应体（Token + 用户信息）
 class TokenWithUser(Token):
     user: UserOut
+
+
+# 注销账号请求体
+class DeleteAccount(BaseModel):
+    password: str

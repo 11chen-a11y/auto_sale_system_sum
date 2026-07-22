@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.conf_db import get_db
 from utils.redis import save_code, get_code, delete_code
-from models.models import SysUser
-from schemas.schemas import UserCreate, UserLogin, UserOut, Token, TokenWithUser, SendCode, PhoneLogin
+from models.models import SysUser, Customer
+from schemas.schemas import UserCreate, UserLogin, UserOut, Token, TokenWithUser, SendCode, PhoneLogin, DeleteAccount
 from utils.auth import hash_password, verify_password, create_access_token, get_current_user
 import httpx
 
@@ -94,6 +94,27 @@ async def login_phone(data: PhoneLogin, db: AsyncSession = Depends(get_db)):
 
     token = create_access_token({"sub": user.username})
     return {"access_token": token, "user": user}
+
+
+# 注销账号
+@router.delete("/account")
+async def delete_account(
+    data: DeleteAccount,
+    db: AsyncSession = Depends(get_db),
+    current_user: SysUser = Depends(get_current_user),
+):
+    if not verify_password(data.password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="密码错误")
+
+    await db.execute(
+        Customer.__table__.update()
+        .where(Customer.user_id == current_user.user_id)
+        .values(user_id=None)
+    )
+
+    await db.delete(current_user)
+    await db.commit()
+    return {"msg": "账号已注销"}
 
 
 @router.get("/home", response_model=UserOut)
