@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useUserStore } from '../stores/user'
 import router from '../router'
 
-const http = axios.create({ baseURL: '/users' })
+const http = axios.create({ baseURL: 'http://localhost:8000/users' })
 
 // 请求拦截：自动带 token
 http.interceptors.request.use(config => {
@@ -29,3 +29,5 @@ export const register = data => http.post('/register', data)
 export const login = data => http.post('/login', data)
 export const loginPhone = data => http.post('/login-phone', data)
 export const getHome = () => http.get('/home')
+export const listUsers = () => http.get('/')
+export const setUserRole = (userId, role) => http.put(`/${userId}/role`, { role })

@@ -1,21 +1,59 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, defineAsyncComponent } from 'vue'
 import { useUserStore } from '../stores/user'
+import BatchImportModal from '../components/BatchImportModal.vue'
 
 const store = useUserStore()
-const active = ref('node_price')
+const active = ref('')
 const collapsed = ref(false)
+const showBatchImport = ref(false)
 onMounted(() => { if (!store.userInfo) store.fetchUser() })
 
-const menu = [
+const isAdmin = computed(() => store.userInfo?.role === 'admin')
+
+const pageComponents = {
+  node_price: defineAsyncComponent(() => import('./NodePrice.vue')),
+  load_data: defineAsyncComponent(() => import('./LoadData.vue')),
+  new_energy: defineAsyncComponent(() => import('./NewEnergy.vue')),
+  generator: defineAsyncComponent(() => import('./Generator.vue')),
+  trade: defineAsyncComponent(() => import('./TradeManage.vue')),
+  customer: defineAsyncComponent(() => import('./Customer.vue')),
+  bill: defineAsyncComponent(() => import('./Bill.vue')),
+  contract: defineAsyncComponent(() => import('./Contract.vue')),
+  settlement: defineAsyncComponent(() => import('./Settlement.vue')),
+  load_forecast: defineAsyncComponent(() => import('./LoadForecast.vue')),
+  analysis_center: defineAsyncComponent(() => import('./AnalysisCenter.vue')),
+  user_manage: defineAsyncComponent(() => import('./UserManage.vue')),
+}
+const activeComp = computed(() => (menu.value.some(m => m.key === active.value) ? pageComponents[active.value] : null))
+
+// 公开市场数据：所有登录用户可见（只读）
+const marketMenu = [
   { key: 'node_price', icon: '⚡', label: '节点电价' },
   { key: 'load_data', icon: '📊', label: '负荷数据' },
-  { key: 'new_energy', icon: '🔋', label: '新能源出力' },
-  { key: 'spot_trade', icon: '💹', label: '现货交易' },
-  { key: 'weather', icon: '🌤', label: '天气数据' },
-  { key: 'customer', icon: '🏭', label: '客户档案' },
-  { key: 'bill', icon: '📋', label: '账单管理' },
+  { key: 'analysis_center', icon: '📉', label: '数据分析' },
 ]
+// 业务功能模块：仅管理员可见
+const moduleMenu = [
+  { key: 'new_energy', icon: '🔋', label: '绿电管理' },
+  { key: 'generator', icon: '🏭', label: '发电商管理' },
+  { key: 'trade', icon: '💹', label: '交易管理' },
+  { key: 'customer', icon: '👥', label: '客户档案' },
+  { key: 'bill', icon: '📋', label: '账单管理' },
+  { key: 'contract', icon: '📝', label: '合约管理' },
+  { key: 'settlement', icon: '🧾', label: '交易结算' },
+  { key: 'load_forecast', icon: '📈', label: '负荷预测' },
+]
+// 管理员专属菜单
+const adminMenu = [
+  { key: 'user_manage', icon: '👤', label: '用户管理' },
+]
+
+const menu = computed(() => (isAdmin.value ? [...marketMenu, ...moduleMenu, ...adminMenu] : [...marketMenu]))
+
+watch(isAdmin, () => {
+  if (!menu.value.some(m => m.key === active.value)) active.value = 'node_price'
+}, { immediate: true })
 </script>
 
 <template>
@@ -43,11 +81,17 @@ const menu = [
 
     <main>
       <div class="page-head">
-        <h1>{{ menu.find(m => m.key === active)?.label }}</h1>
-        <div class="badge">{{ active }}</div>
+        <h1>{{ menu.find(m => m.key === active)?.label || '无访问权限' }}</h1>
+        <div class="badge" v-if="active">{{ active }}</div>
+        <button v-if="isAdmin" class="btn btn-ghost sm batch-btn" @click="showBatchImport = true">📥 批量导入</button>
       </div>
-      <div class="content-card"><p class="placeholder">数据加载中...</p></div>
+      <div class="content-card">
+        <component v-if="activeComp" :is="activeComp" :key="active" />
+        <div v-else class="placeholder">您的账号没有权限访问该功能模块，请联系管理员开通权限。</div>
+      </div>
     </main>
+
+    <BatchImportModal v-if="showBatchImport" @close="showBatchImport = false" @imported="showBatchImport = false" />
   </div>
 </template>
 
@@ -100,7 +144,7 @@ nav button {
   cursor: pointer; transition: background .2s, color .2s; white-space: nowrap; width: 100%;
 }
 nav button:hover { background: rgba(255,255,255,.03); color: var(--t1); }
-nav button.on { background: linear-gradient(135deg, rgba(0,212,170,.1), rgba(0,212,170,.03)); color: var(--cyan); font-weight: 400; border: 1px solid rgba(0,212,170,.12); }
+nav button.on { background: linear-gradient(135deg, rgba(255,123,156,.12), rgba(255,123,156,.04)); color: var(--cyan); font-weight: 400; border: 1px solid rgba(255,123,156,.2); }
 
 .mi { font-size: 16px; flex-shrink: 0; }
 
@@ -114,8 +158,9 @@ main { flex: 1; margin-left: 200px; padding: 40px; transition: margin-left .2s; 
 .collapsed main { margin-left: 0; }
 
 .page-head { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
-.page-head h1 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; }
-.badge { display: inline-flex; padding: 4px 14px; background: rgba(0,212,170,.06); border: 1px solid rgba(0,212,170,.12); border-radius: 100px; font-size: .6rem; font-weight: 600; letter-spacing: .15em; color: var(--cyan); }
+.page-head h1 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; color: var(--t1); }
+.badge { display: inline-flex; padding: 4px 14px; background: rgba(255,123,156,.1); border: 1px solid rgba(255,123,156,.2); border-radius: 100px; font-size: .6rem; font-weight: 600; letter-spacing: .15em; color: var(--cyan); }
+.batch-btn { margin-left: auto; }
 
 .content-card { background: var(--surface); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--r); padding: 48px; }
 .placeholder { color: var(--t3); font-weight: 300; text-align: center; }

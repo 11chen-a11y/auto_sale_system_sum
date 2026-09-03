@@ -5,8 +5,5 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     port: 8080,
-    proxy: {
-      '/users': 'http://localhost:8800'
-    }
   }
 })

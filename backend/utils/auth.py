@@ -57,3 +57,15 @@ async def get_current_user(
         raise credentials_exception
     return user
 
+
+# 管理员权限依赖：要求当前用户 role == "admin"
+async def require_admin(
+    current_user: SysUser = Depends(get_current_user),
+) -> SysUser:
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="需要管理员权限",
+        )
+    return current_user
+
